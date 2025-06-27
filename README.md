@@ -31,15 +31,30 @@ This is a fork of the original [TracksApp/tracks](https://github.com/TracksApp/t
 ### Quick Start with Containers:
 
 ```bash
-# Docker approach (traditional):
+# 🎯 FASTEST: Download pre-built container (recommended)
+wget https://github.com/YOUR_USERNAME/tracks-apptainer/releases/latest/download/tracks_apptainer.sif
+apptainer run tracks_apptainer.sif
+
+# 🐋 Docker approach (traditional):
 make build && make run
 
-# Apptainer approach (recommended for HPC/portable/SLURM use):
+# 🔧 Build Apptainer locally (for development):
 make apptainer && make apptainer-run
 
-# For SLURM clusters:
+# ⚡ SLURM clusters:
 sbatch --wrap="apptainer run tracks_apptainer.sif"
 ```
+
+### 📦 Pre-built Containers
+
+**GitHub automatically builds Apptainer containers for every release!**
+
+- **✅ Zero setup required** - download and run immediately
+- **✅ Tested and verified** - built and tested in CI/CD pipeline  
+- **✅ Always up-to-date** - automatically built from latest code
+- **✅ Multiple formats** - Docker images and Apptainer SIF files available
+
+Visit the [Releases page](https://github.com/YOUR_USERNAME/tracks-apptainer/releases) to download the latest pre-built container.
 
 The Apptainer container is completely standalone - you can copy `tracks_apptainer.sif` to any system with Apptainer/Singularity and run it immediately without any dependencies, root access, or complex setup. Perfect for shared computing environments and research clusters.
 
@@ -79,6 +94,13 @@ some information on development, testing and contributing on the wiki.
 ## 🐋 Containerization Details
 
 This fork includes comprehensive containerization support for easy deployment:
+
+### 🤖 Automated Builds (GitHub Actions)
+- **🔄 Continuous Integration**: Automatic testing on every push
+- **📦 Release Automation**: Pre-built Apptainer containers for every GitHub release
+- **✅ Multi-platform**: Docker images published to GitHub Container Registry
+- **🧪 Tested**: All containers are automatically tested before release
+- **📋 Artifacts**: Development builds available as GitHub Actions artifacts
 
 ### Docker Setup
 - **Simplified Makefile**: Use `make build`, `make run`, `make stop` for container management
