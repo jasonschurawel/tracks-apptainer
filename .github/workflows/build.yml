@@ -30,8 +30,13 @@ jobs:
 
     - name: Build using Makefile
       run: |
-        # Use existing Makefile - Option 3: Build both Docker and Apptainer
-        echo "3" | make build
+        # Build Docker first (option 1)
+        echo "1" | make build
+        
+    - name: Build Apptainer with sudo
+      run: |
+        # Build Apptainer container with elevated privileges
+        sudo apptainer build --force tracks_apptainer.sif tracks_apptainer.def
 
     - name: Test Apptainer container
       run: |
