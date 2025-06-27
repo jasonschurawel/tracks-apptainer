@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  mount Tolk::Engine => '/tolk', :as => 'tolk' if Rails.env=='development'
+  mount Tolk::Engine => '/tolk', :as => 'tolk' if Rails.env=='development' && defined?(Tolk)
 
   root :to => 'todos#index'
 

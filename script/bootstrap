@@ -11,4 +11,4 @@ echo "==> Building Docker image…"
 $docker_compose build
 
 echo "==> Building assets…"
-bin/rake assets:precompile
+echo "==> Assets already precompiled in Docker image"

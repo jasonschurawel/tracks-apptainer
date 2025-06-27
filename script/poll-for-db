@@ -7,11 +7,15 @@ if [ "$1" == "mysql" ]; then
   [ -f /etc/app-env ] || exec "$appdir/script/docker-environment" $0 $@
 
   for i in {1..60}; do
-    echo "... Checking for connection"
-    nc -z -w5 db 3306 && exit
-    sleep 1
+    echo "... Checking for connection (attempt $i/60)"
+    # Check if we can connect to the database port
+    if nc -z -w5 db 3306 2>/dev/null; then
+      echo "Database is ready!"
+      exit 0
+    fi
+    sleep 2
   done
 
-  echo "Unable to reach database!"
+  echo "Unable to reach database after 60 attempts!"
   exit 1
 fi

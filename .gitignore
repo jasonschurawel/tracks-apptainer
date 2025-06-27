@@ -27,3 +27,5 @@ nbproject
 rerun.txt
 tags
 .use-docker
+tracks_apptainer.sif
+tracks_docker.tar

@@ -1,0 +1,105 @@
+Bootstrap: docker-archive
+From: tracks_docker.tar
+
+%help
+    Tracks GTD Application - Working Apptainer Container
+    
+    This container is pre-configured with SQLite database and ready to run.
+    
+    Usage:
+        apptainer run tracks-working.sif
+    
+    The application will be available at http://localhost:3000
+    Default login: admin/admin
+
+%labels
+    Author Tracks Development Team
+    Version 2.6.0
+    Description Tracks GTD application with SQLite - pre-configured and working
+
+%post
+    echo "Setting up Tracks for standalone SQLite deployment..."
+    cd /app
+    
+    # Create site configuration
+    cat > config/site.yml << 'EOF'
+authentication_schemes:
+  - "database"
+time_zone: "UTC"
+week_starts: 0
+date_format: "%d/%m/%Y"
+admin_email: "admin@localhost"
+secure_cookies: false
+secret_token: "simple_standalone_key_for_apptainer_deployment"
+force_ssl: false
+open_signups: false
+EOF
+
+    # Create SQLite database configuration
+    cat > config/database.yml << 'EOF'
+production:
+  adapter: sqlite3
+  database: /tmp/tracks.sqlite3
+  pool: 5
+  timeout: 5000
+EOF
+
+    # Set up environment for Rails
+    export RAILS_ENV=production
+    export SECRET_KEY_BASE=simple_standalone_key_for_apptainer_deployment
+    export RAILS_SERVE_STATIC_FILES=true
+    
+    # Create database directory
+    mkdir -p /app/db
+    
+    echo "Setup complete!"
+
+%environment
+    export RAILS_ENV=production
+    export SECRET_KEY_BASE=simple_standalone_key_for_apptainer_deployment
+    export RAILS_SERVE_STATIC_FILES=true
+
+%runscript
+    cd /app
+    
+    # Initialize database and create admin user if it doesn't exist
+    if [ ! -f /tmp/tracks.sqlite3 ]; then
+        echo "Setting up SQLite database..."
+        /app/bin/rake db:create db:migrate RAILS_ENV=production
+        
+        echo "Creating admin user..."
+        cat > /tmp/create_admin.rb << 'ADMIN_EOF'
+require 'digest/sha1'
+
+# Set time zone for Rails environment
+Time.zone = 'UTC'
+
+user = User.new(
+  login: 'admin',
+  password: 'admin',
+  password_confirmation: 'admin',
+  is_admin: true,
+  first_name: 'Admin',
+  last_name: 'User'
+)
+user.auth_type = 'database'
+# Generate token manually to avoid Time.zone issues
+user.token = Digest::SHA1.hexdigest("#{Time.now.to_i}#{rand}")
+user.save!(validate: false)
+
+# Create user preferences (required for login)
+Preference.create!(user: user)
+
+puts 'Admin user created successfully: admin/admin'
+ADMIN_EOF
+        RAILS_ENV=production /app/bin/rails runner /tmp/create_admin.rb
+        echo "Database setup complete!"
+    else
+        echo "Database already exists, skipping setup..."
+    fi
+    
+    echo "Starting Tracks GTD Application..."
+    echo "Application will be available at http://localhost:3000"
+    echo "Default login: admin/admin"
+    echo ""
+    exec /app/bin/rails server -b 0.0.0.0 -p 3000 -e production

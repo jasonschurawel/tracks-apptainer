@@ -42,7 +42,9 @@ CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
 
 FROM base AS precompile
 RUN bundle config set deployment true
+RUN bundle config set with assets
 RUN bundle install --jobs 4
+RUN bundle exec rake assets:clobber
 RUN RAILS_GROUPS=assets bundle exec rake assets:precompile
 
 # Build the environment-specific stuff

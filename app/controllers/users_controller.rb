@@ -89,7 +89,9 @@ class UsersController < ApplicationController
         user = User.new(user_params)
 
         unless user.valid?
-          notify :error,  t('users.create_error')
+          # Store the user object with validation errors for the form
+          session['new_user'] = user
+          notify :error,  user.errors.full_messages.join(', ')
           redirect_to signup_path
           return
         end
