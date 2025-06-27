@@ -79,6 +79,25 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Project version: $VERSION"
 
+    - name: Verify files exist
+      run: |
+        echo "Checking if container files were created successfully..."
+        if [ -f "tracks_apptainer.sif" ]; then
+          echo "✓ tracks_apptainer.sif exists ($(du -h tracks_apptainer.sif | cut -f1))"
+        else
+          echo "❌ tracks_apptainer.sif not found!"
+          exit 1
+        fi
+        
+        if [ -f "tracks_docker.tar" ]; then
+          echo "✓ tracks_docker.tar exists ($(du -h tracks_docker.tar | cut -f1))"
+        else
+          echo "❌ tracks_docker.tar not found!"
+          exit 1
+        fi
+        
+        echo "All container files ready for upload!"
+
     - name: Upload containers as artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -137,16 +156,51 @@ jobs:
 
     - name: Create auto-release (on main/master push)
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-      run: |
-        # Create automatic release for latest builds
-        VERSION=${{ steps.version.outputs.version }}
-        TIMESTAMP=$(date +"%Y%m%d-%H%M")
-        TAG="${VERSION}-${TIMESTAMP}"
-        
-        # Create tag and release
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git tag $TAG
-        git push origin $TAG
-        
-        echo "Created automatic release: $TAG"
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.version }}-${{ github.run_number }}
+        name: "Auto Release ${{ steps.version.outputs.version }}-${{ github.run_number }}"
+        files: |
+          tracks_apptainer.sif
+          tracks_docker.tar
+        body: |
+          ## 🐋 Tracks GTD Auto Release ${{ steps.version.outputs.version }}-${{ github.run_number }}
+          
+          This is an automated release from the latest main/master branch build.
+          
+          ### 📦 Container Files
+          - **Apptainer Container**: `tracks_apptainer.sif` (${{ steps.size.outputs.sif_size }})
+          - **Docker Archive**: `tracks_docker.tar` (${{ steps.size.outputs.tar_size }})
+          
+          ### 🚀 Quick Start - Apptainer (Recommended for HPC)
+          ```bash
+          # Download and run Apptainer container
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}-${{ github.run_number }}/tracks_apptainer.sif
+          apptainer run tracks_apptainer.sif
+          # Access at http://localhost:3000 (admin/admin)
+          ```
+          
+          ### 🐋 Quick Start - Docker
+          ```bash
+          # Download and load Docker image
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}-${{ github.run_number }}/tracks_docker.tar
+          docker load < tracks_docker.tar
+          docker run -p 3000:3000 tracks-apptainer_web:latest
+          # Access at http://localhost:3000 (admin/admin)
+          ```
+          
+          ### ⚡ SLURM Usage (Apptainer)
+          ```bash
+          sbatch --wrap="apptainer run tracks_apptainer.sif"
+          ```
+          
+          ### ✨ Features
+          - 🗄️ **SQLite database** (embedded in Apptainer)
+          - 👤 **Pre-configured admin user** (admin/admin)
+          - 🔒 **Production environment** with security defaults
+          - 🎯 **HPC-optimized** for research computing
+          - 📱 **Portable** - works anywhere containers are supported
+        draft: false
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
