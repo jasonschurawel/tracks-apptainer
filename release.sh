@@ -74,7 +74,7 @@ if ! git diff --quiet; then
 fi
 
 # Create and push tag
-TAG="v$NEW_VERSION"
+TAG="$NEW_VERSION"
 print_status "Creating git tag: $TAG"
 git tag -a "$TAG" -m "Release version $NEW_VERSION"
 

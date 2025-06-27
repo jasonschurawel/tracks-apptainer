@@ -116,11 +116,11 @@ This fork includes comprehensive containerization support for easy deployment:
 ./release.sh
 
 # Manual release creation
-echo "1.1.0" > VERSION
+echo "R1.1.0" > VERSION
 git add VERSION
-git commit -m "Bump version to 1.1.0"
-git tag v1.1.0
-git push origin v1.1.0
+git commit -m "Bump version to R1.1.0"
+git tag R1.1.0
+git push origin R1.1.0
 ```
 
 ### Docker Setup

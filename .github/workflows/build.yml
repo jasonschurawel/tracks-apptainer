@@ -3,7 +3,7 @@ name: Build Apptainer Container
 on:
   push:
     branches: [ main, master ]
-    tags: [ 'v*' ]
+    tags: [ '*' ]  # Trigger on any tag
   workflow_dispatch:
 
 jobs:
@@ -35,14 +35,17 @@ jobs:
         
     - name: Export Docker image as tar
       run: |
-        # Export the Docker image for distribution
+        # Export the Docker image for distribution with proper naming
         docker save tracks-apptainer_web:latest > tracks_docker.tar
         echo "Docker image exported as tracks_docker.tar"
+        ls -la tracks_docker.tar
         
     - name: Build Apptainer container
       run: |
         # Build Apptainer container without fakeroot (GitHub Actions compatible)
         sudo apptainer build tracks_apptainer.sif tracks_apptainer.def
+        echo "Apptainer container built as tracks_apptainer.sif"
+        ls -la tracks_apptainer.sif
 
     - name: Test Apptainer container
       run: |
@@ -93,7 +96,7 @@ jobs:
           tracks_apptainer.sif
           tracks_docker.tar
         body: |
-          ## 🐋 Tracks GTD Release v${{ steps.version.outputs.version }}
+          ## 🐋 Tracks GTD Release ${{ steps.version.outputs.version }}
           
           This release includes both Apptainer and Docker distributions of the Tracks GTD application.
           
@@ -138,7 +141,7 @@ jobs:
         # Create automatic release for latest builds
         VERSION=${{ steps.version.outputs.version }}
         TIMESTAMP=$(date +"%Y%m%d-%H%M")
-        TAG="v${VERSION}-${TIMESTAMP}"
+        TAG="${VERSION}-${TIMESTAMP}"
         
         # Create tag and release
         git config --local user.email "action@github.com"
