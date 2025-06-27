@@ -33,10 +33,16 @@ jobs:
         # Build Docker first (option 1)
         echo "1" | make build
         
-    - name: Build Apptainer with sudo
+    - name: Configure Apptainer for CI
       run: |
-        # Build Apptainer container with elevated privileges and fakeroot
-        sudo apptainer build --fakeroot tracks_apptainer.sif tracks_apptainer.def
+        # Configure subuid/subgid for fakeroot support
+        echo "runner:100000:65536" | sudo tee -a /etc/subuid
+        echo "runner:100000:65536" | sudo tee -a /etc/subgid
+        
+    - name: Build Apptainer with fakeroot
+      run: |
+        # Build Apptainer container with fakeroot (now properly configured)
+        apptainer build --fakeroot tracks_apptainer.sif tracks_apptainer.def
 
     - name: Test Apptainer container
       run: |
