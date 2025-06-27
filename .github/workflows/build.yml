@@ -33,23 +33,17 @@ jobs:
         # Build Docker first (option 1)
         echo "1" | make build
         
-    - name: Configure Apptainer for CI
+    - name: Build Apptainer container
       run: |
-        # Configure subuid/subgid for fakeroot support
-        echo "runner:100000:65536" | sudo tee -a /etc/subuid
-        echo "runner:100000:65536" | sudo tee -a /etc/subgid
-        
-    - name: Build Apptainer with fakeroot
-      run: |
-        # Build Apptainer container with fakeroot (now properly configured)
-        apptainer build --fakeroot tracks_apptainer.sif tracks_apptainer.def
+        # Build Apptainer container without fakeroot (GitHub Actions compatible)
+        sudo apptainer build tracks_apptainer.sif tracks_apptainer.def
 
     - name: Test Apptainer container
       run: |
         # Quick test to ensure the container works (skip if permissions fail)
-        if apptainer exec tracks_apptainer.sif ls /app >/dev/null 2>&1; then
+        if apptainer exec --no-userns tracks_apptainer.sif ls /app >/dev/null 2>&1; then
           echo "✓ Container structure test passed"
-          apptainer exec tracks_apptainer.sif bundle --version || echo "Bundle check failed but continuing"
+          apptainer exec --no-userns tracks_apptainer.sif bundle --version || echo "Bundle check failed but continuing"
         else
           echo "⚠ Container test skipped due to permissions, but build succeeded"
           ls -la tracks_apptainer.sif
