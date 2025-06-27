@@ -33,6 +33,12 @@ jobs:
         # Build Docker first (option 1)
         echo "1" | make build
         
+    - name: Export Docker image as tar
+      run: |
+        # Export the Docker image for distribution
+        docker save tracks-apptainer_web:latest > tracks_docker.tar
+        echo "Docker image exported as tracks_docker.tar"
+        
     - name: Build Apptainer container
       run: |
         # Build Apptainer container without fakeroot (GitHub Actions compatible)
@@ -52,38 +58,92 @@ jobs:
     - name: Get container size
       id: size
       run: |
-        SIZE=$(du -h tracks_apptainer.sif | cut -f1)
-        echo "size=$SIZE" >> $GITHUB_OUTPUT
-        echo "Container size: $SIZE"
+        SIF_SIZE=$(du -h tracks_apptainer.sif | cut -f1)
+        TAR_SIZE=$(du -h tracks_docker.tar | cut -f1)
+        echo "sif_size=$SIF_SIZE" >> $GITHUB_OUTPUT
+        echo "tar_size=$TAR_SIZE" >> $GITHUB_OUTPUT
+        echo "Apptainer container size: $SIF_SIZE"
+        echo "Docker tar size: $TAR_SIZE"
 
-    - name: Upload Apptainer container
+    - name: Get version
+      id: version
+      run: |
+        if [ -f VERSION ]; then
+          VERSION=$(cat VERSION)
+        else
+          VERSION="latest"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Project version: $VERSION"
+
+    - name: Upload containers as artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: tracks-apptainer-${{ github.sha }}
-        path: tracks_apptainer.sif
+        name: tracks-containers-${{ github.sha }}
+        path: |
+          tracks_apptainer.sif
+          tracks_docker.tar
         retention-days: 90
 
     - name: Create Release (on tag)
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        files: tracks_apptainer.sif
+        files: |
+          tracks_apptainer.sif
+          tracks_docker.tar
         body: |
-          ## 🐋 Tracks GTD Apptainer Container
+          ## 🐋 Tracks GTD Release v${{ steps.version.outputs.version }}
           
-          **Size**: ${{ steps.size.outputs.size }}
+          This release includes both Apptainer and Docker distributions of the Tracks GTD application.
           
-          ### Quick Start
+          ### 📦 Container Files
+          - **Apptainer Container**: `tracks_apptainer.sif` (${{ steps.size.outputs.sif_size }})
+          - **Docker Archive**: `tracks_docker.tar` (${{ steps.size.outputs.tar_size }})
+          
+          ### 🚀 Quick Start - Apptainer (Recommended for HPC)
           ```bash
-          # Download and run
+          # Download and run Apptainer container
           wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/tracks_apptainer.sif
           apptainer run tracks_apptainer.sif
           # Access at http://localhost:3000 (admin/admin)
           ```
           
-          ### SLURM Usage
+          ### 🐋 Quick Start - Docker
+          ```bash
+          # Download and load Docker image
+          wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/tracks_docker.tar
+          docker load < tracks_docker.tar
+          docker run -p 3000:3000 tracks-apptainer_web:latest
+          # Access at http://localhost:3000 (admin/admin)
+          ```
+          
+          ### ⚡ SLURM Usage (Apptainer)
           ```bash
           sbatch --wrap="apptainer run tracks_apptainer.sif"
           ```
+          
+          ### ✨ Features
+          - 🗄️ **SQLite database** (embedded in Apptainer)
+          - 👤 **Pre-configured admin user** (admin/admin)
+          - 🔒 **Production environment** with security defaults
+          - 🎯 **HPC-optimized** for research computing
+          - 📱 **Portable** - works anywhere containers are supported
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create auto-release (on main/master push)
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      run: |
+        # Create automatic release for latest builds
+        VERSION=${{ steps.version.outputs.version }}
+        TIMESTAMP=$(date +"%Y%m%d-%H%M")
+        TAG="v${VERSION}-${TIMESTAMP}"
+        
+        # Create tag and release
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag $TAG
+        git push origin $TAG
+        
+        echo "Created automatic release: $TAG"

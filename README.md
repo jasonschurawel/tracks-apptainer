@@ -32,14 +32,16 @@ This is a fork of the original [TracksApp/tracks](https://github.com/TracksApp/t
 
 ```bash
 # 🎯 FASTEST: Download pre-built container (recommended)
-wget https://github.com/YOUR_USERNAME/tracks-apptainer/releases/latest/download/tracks_apptainer.sif
+wget https://github.com/jasonschurawel/tracks-apptainer/releases/latest/download/tracks_apptainer.sif
 apptainer run tracks_apptainer.sif
 
-# 🐋 Docker approach (traditional):
-make build && make run
+# 🐋 Docker approach (from release):
+wget https://github.com/jasonschurawel/tracks-apptainer/releases/latest/download/tracks_docker.tar
+docker load < tracks_docker.tar
+docker run -p 3000:3000 tracks-apptainer_web:latest
 
-# 🔧 Build Apptainer locally (for development):
-make apptainer && make apptainer-run
+# 🔧 Build locally (for development):
+make build && make run
 
 # ⚡ SLURM clusters:
 sbatch --wrap="apptainer run tracks_apptainer.sif"
@@ -47,14 +49,19 @@ sbatch --wrap="apptainer run tracks_apptainer.sif"
 
 ### 📦 Pre-built Containers
 
-**GitHub automatically builds Apptainer containers for every release!**
+**GitHub automatically builds both Apptainer and Docker containers for every release!**
 
 - **✅ Zero setup required** - download and run immediately
 - **✅ Tested and verified** - built and tested in CI/CD pipeline  
 - **✅ Always up-to-date** - automatically built from latest code
-- **✅ Multiple formats** - Docker images and Apptainer SIF files available
+- **✅ Multiple formats** - Both Apptainer SIF and Docker TAR files available
+- **✅ Version controlled** - Each release is properly tagged and versioned
 
-Visit the [Releases page](https://github.com/YOUR_USERNAME/tracks-apptainer/releases) to download the latest pre-built container.
+Visit the [Releases page](https://github.com/jasonschurawel/tracks-apptainer/releases) to download the latest pre-built containers.
+
+#### Available Downloads per Release:
+- **`tracks_apptainer.sif`** - Apptainer/Singularity container (recommended for HPC)
+- **`tracks_docker.tar`** - Docker image archive (for Docker environments)
 
 The Apptainer container is completely standalone - you can copy `tracks_apptainer.sif` to any system with Apptainer/Singularity and run it immediately without any dependencies, root access, or complex setup. Perfect for shared computing environments and research clusters.
 
@@ -97,10 +104,24 @@ This fork includes comprehensive containerization support for easy deployment:
 
 ### 🤖 Automated Builds (GitHub Actions)
 - **🔄 Continuous Integration**: Automatic testing on every push
-- **📦 Release Automation**: Pre-built Apptainer containers for every GitHub release
-- **✅ Multi-platform**: Docker images published to GitHub Container Registry
+- **📦 Release Automation**: Pre-built containers for every GitHub release
+- **🏷️ Version Management**: Semantic versioning with automatic tagging
+- **✅ Multi-format**: Both Apptainer SIF and Docker TAR files
 - **🧪 Tested**: All containers are automatically tested before release
 - **📋 Artifacts**: Development builds available as GitHub Actions artifacts
+
+#### Creating Releases
+```bash
+# Easy release creation
+./release.sh
+
+# Manual release creation
+echo "1.1.0" > VERSION
+git add VERSION
+git commit -m "Bump version to 1.1.0"
+git tag v1.1.0
+git push origin v1.1.0
+```
 
 ### Docker Setup
 - **Simplified Makefile**: Use `make build`, `make run`, `make stop` for container management
