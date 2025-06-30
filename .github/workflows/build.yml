@@ -131,6 +131,15 @@ jobs:
           # Access at http://localhost:3000 (admin/admin)
           ```
           
+          ### 💾 Persistent Data (Apptainer)
+          **For data that survives container restarts:**
+          ```bash
+          # Create data directory and run with persistence
+          mkdir -p tracks_data
+          apptainer run --bind ./tracks_data:/tmp --writable-tmpfs tracks_apptainer.sif
+          # Your data will be saved in ./tracks_data/ between runs
+          ```
+          
           ### 🐋 Quick Start - Docker
           ```bash
           # Download and load Docker image
@@ -142,7 +151,11 @@ jobs:
           
           ### ⚡ SLURM Usage (Apptainer)
           ```bash
+          # Basic SLURM job
           sbatch --wrap="apptainer run tracks_apptainer.sif"
+          
+          # SLURM with persistent data
+          sbatch --wrap="apptainer run --bind ./tracks_data:/tmp --writable-tmpfs tracks_apptainer.sif"
           ```
           
           ### ✨ Features
@@ -154,19 +167,19 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Create auto-release (on main/master push)
+    - name: Create release (on main/master push)
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ steps.version.outputs.version }}-${{ github.run_number }}
-        name: "Auto Release ${{ steps.version.outputs.version }}-${{ github.run_number }}"
+        tag_name: ${{ steps.version.outputs.version }}
+        name: "Release ${{ steps.version.outputs.version }}"
         files: |
           tracks_apptainer.sif
           tracks_docker.tar
         body: |
-          ## 🐋 Tracks GTD Auto Release ${{ steps.version.outputs.version }}-${{ github.run_number }}
+          ## 🐋 Tracks GTD Release ${{ steps.version.outputs.version }}
           
-          This is an automated release from the latest main/master branch build.
+          This release includes both Apptainer and Docker distributions of the Tracks GTD application.
           
           ### 📦 Container Files
           - **Apptainer Container**: `tracks_apptainer.sif` (${{ steps.size.outputs.sif_size }})
@@ -175,15 +188,24 @@ jobs:
           ### 🚀 Quick Start - Apptainer (Recommended for HPC)
           ```bash
           # Download and run Apptainer container
-          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}-${{ github.run_number }}/tracks_apptainer.sif
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/tracks_apptainer.sif
           apptainer run tracks_apptainer.sif
           # Access at http://localhost:3000 (admin/admin)
+          ```
+          
+          ### 💾 Persistent Data (Apptainer)
+          **For data that survives container restarts:**
+          ```bash
+          # Create data directory and run with persistence
+          mkdir -p tracks_data
+          apptainer run --bind ./tracks_data:/tmp --writable-tmpfs tracks_apptainer.sif
+          # Your data will be saved in ./tracks_data/ between runs
           ```
           
           ### 🐋 Quick Start - Docker
           ```bash
           # Download and load Docker image
-          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}-${{ github.run_number }}/tracks_docker.tar
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/tracks_docker.tar
           docker load < tracks_docker.tar
           docker run -p 3000:3000 tracks-apptainer_web:latest
           # Access at http://localhost:3000 (admin/admin)
@@ -191,7 +213,11 @@ jobs:
           
           ### ⚡ SLURM Usage (Apptainer)
           ```bash
+          # Basic SLURM job
           sbatch --wrap="apptainer run tracks_apptainer.sif"
+          
+          # SLURM with persistent data
+          sbatch --wrap="apptainer run --bind ./tracks_data:/tmp --writable-tmpfs tracks_apptainer.sif"
           ```
           
           ### ✨ Features
@@ -201,6 +227,6 @@ jobs:
           - 🎯 **HPC-optimized** for research computing
           - 📱 **Portable** - works anywhere containers are supported
         draft: false
-        prerelease: true
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
