@@ -172,3 +172,26 @@ apptainer run --bind /scratch:/data tracks_apptainer.sif
 - **Secure defaults**: Production Rails environment with proper security settings
 - **Resource efficient**: Optimized for minimal memory and storage usage
 - **Cross-platform**: Works on Linux, macOS (Docker), and HPC clusters (Apptainer)
+
+### 💾 Persistent Data (Simple Method)
+
+By default, the Apptainer container loses data on restart. For persistent data:
+
+```bash
+# Simple persistent setup (recommended)
+make setup-persistent           # Create data directory
+make apptainer-run-persistent   # Run with persistence
+
+# Or directly:
+mkdir -p tracks_data
+chmod +x run_persistent.sh
+./run_persistent.sh
+```
+
+This creates a `tracks_data/` directory that preserves your database and files between runs.
+
+**Why this works:**
+- Binds local `./tracks_data/` to container's `/tmp/` where the SQLite database lives
+- Simple, no complex configuration needed
+- Data persists automatically between container restarts
+- Just copy `tracks_data/` to backup/move your data

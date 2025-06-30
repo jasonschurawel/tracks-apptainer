@@ -97,6 +97,24 @@ apptainer-run: ## Run the Apptainer container
 	@echo "Press Ctrl+C to stop the application"
 	apptainer run --writable-tmpfs tracks_apptainer.sif
 
+.PHONY: apptainer-run-persistent
+apptainer-run-persistent: ## Run Apptainer container with persistent data
+	@if [ ! -f tracks_apptainer.sif ]; then echo "tracks_apptainer.sif not found. Run 'make apptainer' first."; exit 1; fi
+	@chmod +x run_persistent.sh
+	@echo "Starting Tracks with persistent data in ./tracks_data/"
+	./run_persistent.sh
+
+.PHONY: setup-persistent
+setup-persistent: ## Setup persistent data directory
+	mkdir -p tracks_data
+	chmod +x run_persistent.sh
+	@echo "✓ Created tracks_data/ directory for persistent storage"
+	@echo "✓ Made run_persistent.sh executable"
+	@echo ""
+	@echo "Usage:"
+	@echo "  make apptainer-run-persistent  # Run with persistence"
+	@echo "  ./run_persistent.sh           # Direct script execution"
+
 .PHONY: apptainer-clean
 apptainer-clean: ## Clean up running Apptainer/Rails processes and temp files
 	@echo "Stopping any running Rails/Puma processes..."
